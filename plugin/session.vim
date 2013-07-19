@@ -113,7 +113,8 @@ amenu 400.120 &Sessions.&Restart\ Vim\.\.\.<Tab>:RestartVim :RestartVim<CR>
 augroup PluginSession
   autocmd!
   au VimEnter * nested call xolox#session#auto_load()
-  au CursorHold,CursorHoldI * call xolox#session#auto_save_periodic()
+  "au CursorHold,CursorHoldI * call xolox#session#auto_save_periodic()
+  au FocusLost * call xolox#session#auto_save_periodic()
   au VimLeavePre * call xolox#session#auto_save()
   au VimLeavePre * call xolox#session#auto_unlock()
 augroup END
