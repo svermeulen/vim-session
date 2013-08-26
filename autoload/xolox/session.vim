@@ -756,7 +756,7 @@ function! xolox#session#restart_cmd(bang, args) abort " {{{2
     endif
     call xolox#session#save_cmd(name, a:bang, 'RestartVim')
     " Generate the Vim command line.
-    let progname = xolox#misc#escape#shell(xolox#misc#os#find_vim())
+    let progname = xolox#misc#os#find_vim()
     let command = progname . ' -g -c ' . xolox#misc#escape#shell('OpenSession\! ' . fnameescape(name))
     let args = matchstr(a:args, '^\s*|\s*\zs.\+$')
     if !empty(args)
@@ -772,7 +772,7 @@ function! xolox#session#restart_cmd(bang, args) abort " {{{2
       " On Microsoft Windows.
       " We would prefer to use '!start command' directly but this results in the restarted instance not having the correct servername (the new instance adds a 1 to the end)
       " we add sleep 0 so that it doesn't interpret the quoted path as the full command
-      execute '!start cmd /c start sleep 0 && ' . command
+      execute '!start cmd /c start ' . command
     else
       " On anything other than Windows (UNIX like).
       let cmdline = []
