@@ -1,6 +1,6 @@
 " Vim script
 " Author: Peter Odding
-" Last Change: May 12, 2013
+" Last Change: July 4, 2013
 " URL: http://peterodding.com/code/vim/session/
 
 " Support for automatic update using the GLVS plug-in.
@@ -11,9 +11,31 @@ if &cp || exists('g:loaded_session')
   finish
 endif
 
+" Make sure vim-misc is installed. {{{1
+
+try
+  " The point of this code is to do something completely innocent while making
+  " sure the vim-misc plug-in is installed. We specifically don't use Vim's
+  " exists() function because it doesn't load auto-load scripts that haven't
+  " already been loaded yet (last tested on Vim 7.3).
+  call type(g:xolox#misc#version)
+catch
+  echomsg "Warning: The vim-session plug-in requires the vim-misc plug-in which seems not to be installed! For more information please review the installation instructions in the readme (also available on the homepage and on GitHub). The vim-session plug-in will now be disabled."
+  let g:loaded_session = 1
+  finish
+endtry
+
+" Configuration defaults. {{{1
+
 " The name of the default session (without directory or filename extension).
 if !exists('g:session_default_name')
   let g:session_default_name = 'default'
+endif
+
+" If you set this to 1 (true), every Vim instance without an explicit session
+" loaded will overwrite the default session (the last Vim instance wins).
+if !exists('g:session_default_overwrite')
+  let g:session_default_overwrite = 0
 endif
 
 " The file extension of session scripts.
@@ -82,7 +104,13 @@ if !exists('g:session_command_aliases')
   let g:session_command_aliases = 0
 endif
 
-" Make sure the session scripts directory exists and is writable.
+" Allow to turn off the menu.
+if !exists('g:session_menu')
+  let g:session_menu = 1
+endif
+
+" Make sure the sessions directory exists and is writable. {{{1
+
 let s:directory = fnamemodify(g:session_directory, ':p')
 if !isdirectory(s:directory)
   call mkdir(s:directory, 'p')
@@ -95,21 +123,25 @@ if filewritable(s:directory) != 2
 endif
 unlet s:directory
 
-" Define menu items to make the plug-in more accessible.
-amenu 400.10 &Sessions.&Open\ session\.\.\.<Tab>:OpenSession :OpenSession<CR>
-amenu 400.20 &Sessions.&Save\ session\.\.\.<Tab>:SaveSession :SaveSession<CR>
-amenu 400.30 &Sessions.&Close\ session\.\.\.<Tab>:CloseSession :CloseSession<CR>
-amenu 400.40 &Sessions.&Delete\ session\.\.\.<Tab>:DeleteSession :DeleteSession<CR>
-amenu 400.50 &Sessions.&View\ session\.\.\.<Tab>:ViewSession :ViewSession<CR>
-amenu 400.60 &Sessions.-Sep1- :
-amenu 400.70 &Sessions.Open\ tab\ session\.\.\.<Tab>:OpenTabSession :OpenTabSession<CR>
-amenu 400.80 &Sessions.&Append\ tab\ session\.\.\.<Tab>:AppendTabSession :AppendTabSession<CR>
-amenu 400.90 &Sessions.Save\ tab\ session\.\.\.<Tab>:SaveTabSession :SaveTabSession<CR>
-amenu 400.100 &Sessions.Close\ tab\ session\.\.\.<Tab>:CloseTabSession :CloseTabSession<CR>
-amenu 400.110 &Sessions.-Sep2- :
-amenu 400.120 &Sessions.&Restart\ Vim\.\.\.<Tab>:RestartVim :RestartVim<CR>
+" Menu items to make the plug-in more accessible. {{{1
 
-" Define automatic commands for automatic session management.
+if g:session_menu
+  amenu 400.10 &Sessions.&Open\ session\.\.\.<Tab>:OpenSession :OpenSession<CR>
+  amenu 400.20 &Sessions.&Save\ session\.\.\.<Tab>:SaveSession :SaveSession<CR>
+  amenu 400.30 &Sessions.&Close\ session\.\.\.<Tab>:CloseSession :CloseSession<CR>
+  amenu 400.40 &Sessions.&Delete\ session\.\.\.<Tab>:DeleteSession :DeleteSession<CR>
+  amenu 400.50 &Sessions.&View\ session\.\.\.<Tab>:ViewSession :ViewSession<CR>
+  amenu 400.60 &Sessions.-Sep1- :
+  amenu 400.70 &Sessions.Open\ tab\ session\.\.\.<Tab>:OpenTabSession :OpenTabSession<CR>
+  amenu 400.80 &Sessions.&Append\ tab\ session\.\.\.<Tab>:AppendTabSession :AppendTabSession<CR>
+  amenu 400.90 &Sessions.Save\ tab\ session\.\.\.<Tab>:SaveTabSession :SaveTabSession<CR>
+  amenu 400.100 &Sessions.Close\ tab\ session\.\.\.<Tab>:CloseTabSession :CloseTabSession<CR>
+  amenu 400.110 &Sessions.-Sep2- :
+  amenu 400.120 &Sessions.&Restart\ Vim\.\.\.<Tab>:RestartVim :RestartVim<CR>
+endif
+
+" Automatic commands for automatic session management. {{{1
+
 augroup PluginSession
   autocmd!
   au VimEnter * nested call xolox#session#auto_load()
@@ -118,6 +150,8 @@ augroup PluginSession
   au VimLeavePre * call xolox#session#auto_save()
   au VimLeavePre * call xolox#session#auto_unlock()
 augroup END
+
+" Plug-in commands (user defined commands). {{{1
 
 " Define commands that enable users to manage multiple named, heavy-weight
 " sessions (used to persist/restore a complete Vim editing session including
@@ -138,6 +172,8 @@ command! -bar -bang CloseTabSession call xolox#session#close_tab_cmd(<q-bang>, '
 " Define a command to restart Vim editing sessions.
 command! -bang -nargs=* -complete=command RestartVim call xolox#session#restart_cmd(<q-bang>, <q-args>)
 
+" Plug-in command aliases. {{{2
+
 if g:session_command_aliases
   " Define command aliases of the form "Session" + Action in addition to
   " the real command names which are of the form Action + "Session" (above).
@@ -152,7 +188,8 @@ if g:session_command_aliases
   command! -bar -bang SessionTabClose call xolox#session#close_tab_cmd(<q-bang>, 'SessionTabClose')
 endif
 
-" Don't reload the plug-in once it has loaded successfully.
+" Don't reload the plug-in once it has loaded successfully. {{{1
+
 let g:loaded_session = 1
 
 " vim: ts=2 sw=2 et
