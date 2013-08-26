@@ -653,7 +653,9 @@ function! xolox#session#restart_cmd(bang, args) abort " {{{2
     " Start the new Vim instance.
     if xolox#misc#os#is_win()
       " On Microsoft Windows.
-      execute '!start' command
+      " We would prefer to use '!start command' directly but this results in the restarted instance not having the correct servername (the new instance adds a 1 to the end)
+      " we add sleep 0 so that it doesn't interpret the quoted path as the full command
+      execute '!start cmd /c start sleep 0 && ' . command
     else
       " On anything other than Windows (UNIX like).
       let cmdline = []
