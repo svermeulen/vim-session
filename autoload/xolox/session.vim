@@ -756,7 +756,11 @@ function! xolox#session#restart_cmd(bang, args) abort " {{{2
     endif
     call xolox#session#save_cmd(name, a:bang, 'RestartVim')
     " Generate the Vim command line.
-    let progname = xolox#misc#os#find_vim()
+    "let progname = xolox#misc#os#find_vim()
+
+    " We can't run vim immediately since then it will start up before we shut down, 
+    " and it won't be able to use the same servername as before
+    let progname = "WaitThenRunVim.bat"
     let command = progname . ' -g -c ' . xolox#misc#escape#shell('OpenSession\! ' . fnameescape(name))
     let args = matchstr(a:args, '^\s*|\s*\zs.\+$')
     if !empty(args)
@@ -769,10 +773,7 @@ function! xolox#session#restart_cmd(bang, args) abort " {{{2
     call xolox#session#close_cmd(a:bang, 0, 1, 'RestartVim')
     " Start the new Vim instance.
     if xolox#misc#os#is_win()
-      " On Microsoft Windows.
-      " We would prefer to use '!start command' directly but this results in the restarted instance not having the correct servername (the new instance adds a 1 to the end)
-      " we add sleep 0 so that it doesn't interpret the quoted path as the full command
-      execute '!start cmd /c start ' . command
+      execute '!start ' . command
     else
       " On anything other than Windows (UNIX like).
       let cmdline = []
